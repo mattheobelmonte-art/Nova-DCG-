@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>NOVA DCG</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#080A10;--bg2:#0D1018;--bg3:#13161F;--surface:#181C28;--surface2:#1E2235;
+--border:rgba(255,255,255,0.055);--border2:rgba(255,255,255,0.1);--border3:rgba(255,255,255,0.18);
+--text:#F0ECE4;--text2:#8A86A0;--text3:#44425A;
+--ue2:#7B8FFF;--ue4:#FF8A50;--ue6:#4ECDC4;--ue9:#C084FC;
+--gold:#E8C97A;--gold2:#B8931A;--red:#FF6B6B;--green:#56CFB2;--blue:#60A5FA;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+#app{display:grid;grid-template-columns:216px 1fr;height:100vh}
+
+/* SIDEBAR */
+#sidebar{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.s-logo{padding:16px 14px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;flex-shrink:0}
+.logo-box{width:32px;height:32px;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:700;font-size:14px;color:#080A10;border-radius:8px;flex-shrink:0;box-shadow:0 3px 10px rgba(232,201,122,.3)}
+.logo-name{font-family:'Playfair Display',serif;font-size:15px;line-height:1.1}
+.logo-name em{color:var(--gold);font-style:italic}
+.logo-sub{font-size:7.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;display:block}
+.sb-scroll{flex:1;overflow-y:auto;padding:8px;scrollbar-width:none}
+.sb-scroll::-webkit-scrollbar{display:none}
+.s-label{font-size:7.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;padding:10px 6px 4px;display:flex;align-items:center;gap:6px}
+.s-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.ue-pill{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;transition:all .2s;border:1px solid transparent;margin-bottom:2px}
+.ue-pill:hover,.ue-pill.active{background:var(--surface);border-color:var(--border2)}
+.ue-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.ue-name{font-size:11px;color:var(--text2);flex:1;font-weight:500}
+.ue-pill.active .ue-name{color:var(--text)}
+.ue-code{font-size:8px;font-family:'JetBrains Mono',monospace;padding:2px 5px;border-radius:4px;font-weight:600}
+.mod-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;transition:all .2s;border:1px solid transparent;margin-bottom:2px;background:transparent;width:100%;text-align:left;font-family:'Outfit',sans-serif;position:relative}
+.mod-btn:hover,.mod-btn.active{background:var(--surface);border-color:var(--border2)}
+.mod-btn.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:2px;height:14px;background:var(--gold);border-radius:0 2px 2px 0}
+.mod-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+.mod-name{font-size:11px;color:var(--text2);font-weight:500}
+.mod-btn.active .mod-name{color:var(--text)}
+.mod-badge{font-size:8px;padding:1px 6px;border-radius:8px;margin-left:auto;font-family:'JetBrains Mono',monospace}
+.sb-bottom{padding:10px;border-top:1px solid var(--border);flex-shrink:0}
+.srs-mini{padding:10px 12px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)}
+.srs-mini-row{display:flex;justify-content:space-between;margin-bottom:6px}
+.srs-mini-lbl{font-size:7.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.srs-mini-nums{font-size:10.5px;font-family:'JetBrains Mono',monospace;display:flex;gap:4px;align-items:center}
+.prog-bar{height:3px;background:var(--border2);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--green));border-radius:2px;transition:width .5s}
+
+/* MAIN */
+#main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg);position:relative}
+#main::before{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:44px 44px;opacity:.5;pointer-events:none;z-index:0}
+#main::after{content:'';position:absolute;top:0;left:0;right:0;height:300px;background:radial-gradient(ellipse 70% 40% at 50% -5%,rgba(123,143,255,.05),transparent);pointer-events:none;z-index:0}
+
+/* TOPBAR */
+#topbar{padding:10px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(8,10,16,.92);backdrop-filter:blur(14px);flex-shrink:0;z-index:10;position:relative}
+.tb-left{display:flex;align-items:center;gap:9px}
+.tb-chip{padding:3px 11px;border-radius:20px;font-size:9px;font-family:'JetBrains Mono',monospace;border:1px solid;font-weight:600;letter-spacing:.04em}
+.tb-mode{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.tb-right{display:flex;gap:7px;align-items:center}
+.tb-btn{padding:5px 12px;border:1px solid var(--border2);background:transparent;cursor:pointer;border-radius:6px;font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;transition:all .2s;letter-spacing:.05em}
+.tb-btn:hover{border-color:var(--border3);color:var(--text);background:var(--surface)}
+.tb-btn.gold{border-color:rgba(232,201,122,.3);color:var(--gold);background:rgba(232,201,122,.07)}
+#pom-widget{display:flex;align-items:center;gap:7px;padding:4px 11px;border:1px solid var(--border2);border-radius:20px;cursor:pointer;transition:all .2s;font-family:'JetBrains Mono',monospace}
+#pom-widget.run{border-color:rgba(232,201,122,.4);background:rgba(232,201,122,.06)}
+#pom-widget.brk{border-color:rgba(86,207,178,.4);background:rgba(86,207,178,.06)}
+.pw-t{font-size:10.5px;color:var(--gold);min-width:34px}
+.pw-l{font-size:7.5px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+
+/* CONTENT */
+#content{flex:1;overflow:hidden;position:relative;z-index:1}
+.panel{display:none;height:100%;flex-direction:column;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--surface) transparent}
+.panel::-webkit-scrollbar{width:3px}
+.panel::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:2px}
+.panel.active{display:flex}
+.pi{padding:20px;display:flex;flex-direction:column;gap:14px;min-height:100%}
+.ptitle{font-family:'Playfair Display',serif;font-size:20px;font-weight:400;flex-shrink:0}
+.ptitle em{color:var(--gold);font-style:italic}
+
+/* CHAT */
+#panel-chat{padding:0}
+#messages{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:16px;scrollbar-width:thin;scrollbar-color:var(--surface) transparent}
+#messages::-webkit-scrollbar{width:3px}
+#messages::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:2px}
+#welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;padding:20px;animation:fu .5s ease both;gap:0;text-align:center}
+@keyframes fu{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.w-orb{width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(232,201,122,.35),rgba(184,147,26,.08));border:1px solid rgba(232,201,122,.2);display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gold);animation:pulse 3s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 16px rgba(232,201,122,.1)}50%{box-shadow:0 0 32px rgba(232,201,122,.22)}}
+.w-eye{font-size:8px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);font-family:'JetBrains Mono',monospace;margin-bottom:10px}
+.w-title{font-family:'Playfair Display',serif;font-size:30px;line-height:1.2;margin-bottom:7px}
+.w-title em{color:var(--gold);font-style:italic}
+.w-sub{font-size:11.5px;color:var(--text3);margin-bottom:28px;line-height:1.7;max-width:360px}
+.w-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;max-width:520px;margin-bottom:18px}
+.w-card{padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--bg2);cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.w-card:hover{transform:translateY(-3px);border-color:var(--border2);background:var(--surface)}
+.w-card-n{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;line-height:1;margin-bottom:3px}
+.w-card-u{font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.12em;margin-bottom:3px;font-weight:600}
+.w-card-l{font-size:9.5px;color:var(--text3);line-height:1.3}
+.w-quick{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-width:460px;width:100%}
+.wqbtn{padding:11px 13px;border:1px solid var(--border);background:var(--bg2);cursor:pointer;border-radius:8px;text-align:left;transition:all .2s;font-family:'Outfit',sans-serif}
+.wqbtn:hover{border-color:var(--border2);background:var(--surface);transform:translateY(-1px)}
+.wq-tag{font-size:7.5px;letter-spacing:.14em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;display:block;margin-bottom:3px;font-weight:600}
+.wq-text{font-size:10.5px;color:var(--text2);line-height:1.4}
+
+/* MESSAGES */
+.message{display:flex;gap:9px;animation:mi .3s ease both;max-width:800px}
+@keyframes mi{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.message.user{flex-direction:row-reverse;align-self:flex-end}
+.m-av{width:26px;height:26px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;margin-top:2px;font-family:'JetBrains Mono',monospace}
+.m-av.nova{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#080A10;box-shadow:0 2px 8px rgba(232,201,122,.25)}
+.m-av.user{background:var(--surface2);color:var(--text2)}
+.m-body{flex:1;min-width:0}
+.m-meta{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.m-name{font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.m-ue{font-size:7.5px;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;border:1px solid}
+.message.user .m-meta{flex-direction:row-reverse}
+.mbub{padding:12px 15px;border-radius:10px;font-size:12.5px;line-height:1.78;background:var(--bg2);border:1px solid var(--border);color:var(--text)}
+.message.user .mbub{background:var(--surface);border-color:var(--border2)}
+.mbub p+p{margin-top:8px}
+.mbub strong{color:var(--gold);font-weight:600}
+.mbub em{color:var(--text2)}
+.mbub h3{font-family:'Playfair Display',serif;font-style:italic;font-size:15px;color:var(--text);margin:12px 0 7px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.mbub h4{font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;margin:12px 0 6px}
+.mbub .al{padding:9px 13px;margin:8px 0;font-size:11.5px;border-radius:0 7px 7px 0;line-height:1.6}
+.mbub .al.w{background:rgba(232,201,122,.07);border-left:3px solid var(--gold);color:var(--text2)}
+.mbub .al.ok{background:rgba(86,207,178,.07);border-left:3px solid var(--green);color:var(--text2)}
+.mbub .al.i{background:rgba(96,165,250,.07);border-left:3px solid var(--blue);color:var(--text2)}
+.mbub ol,.mbub ul{padding-left:16px;margin:6px 0}
+.mbub li{margin-bottom:4px;color:var(--text2);font-size:12px}
+.mbub code{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--bg3);padding:1px 5px;border-radius:3px;color:var(--gold)}
+.mbub hr{border:none;border-top:1px solid var(--border);margin:10px 0}
+.stars{color:var(--gold)}
+.typing{display:flex;gap:4px;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:9px;width:fit-content}
+.td{width:4px;height:4px;border-radius:50%;background:var(--gold);animation:tda 1.2s ease-in-out infinite}
+.td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
+@keyframes tda{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+
+/* INPUT */
+#input-area{padding:10px 20px 16px;border-top:1px solid var(--border);background:rgba(8,10,16,.93);backdrop-filter:blur(14px);flex-shrink:0;z-index:10;position:relative}
+.mode-pills{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
+.mpill{padding:3px 10px;border:1px solid var(--border);background:transparent;cursor:pointer;border-radius:20px;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;transition:all .2s}
+.mpill:hover{border-color:var(--border2);color:var(--text2)}
+.mpill.active{border-color:var(--gold);color:var(--gold);background:rgba(232,201,122,.08)}
+.input-row{display:flex;gap:7px;align-items:flex-end}
+.input-box{flex:1;background:var(--surface);border:1px solid var(--border2);border-radius:10px;display:flex;align-items:flex-end;transition:all .2s}
+.input-box:focus-within{border-color:rgba(232,201,122,.4);box-shadow:0 0 0 3px rgba(232,201,122,.05)}
+#chat-input{flex:1;padding:11px 14px;background:transparent;border:none;outline:none;font-family:'Outfit',sans-serif;font-size:12.5px;color:var(--text);resize:none;max-height:110px;line-height:1.6}
+#chat-input::placeholder{color:var(--text3)}
+.sbtn{margin:7px;width:34px;height:34px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;cursor:pointer;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#080A10;transition:all .2s;flex-shrink:0;box-shadow:0 2px 8px rgba(232,201,122,.2)}
+.sbtn:hover{transform:scale(1.08);box-shadow:0 4px 14px rgba(232,201,122,.35)}
+.sbtn:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
+.ifoot{display:flex;justify-content:space-between;margin-top:6px}
+.ihint{font-size:7.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.mem-dot{display:flex;align-items:center;gap:4px;font-size:7.5px;color:var(--gold);font-family:'JetBrains Mono',monospace}
+.mem-dot::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--gold);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.flash{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:fl .7s ease both;pointer-events:none;z-index:9999}
+@keyframes fl{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+
+/* SHARED COMPONENTS */
+.gen-btn{padding:8px 14px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;cursor:pointer;border-radius:7px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;color:#080A10;transition:all .2s;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(232,201,122,.2)}
+.gen-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(232,201,122,.3)}
+.gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.ue-filter{padding:4px 11px;border:1px solid var(--border);background:transparent;cursor:pointer;border-radius:20px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);transition:all .2s;font-weight:600}
+.ue-filter:hover{border-color:var(--border2);color:var(--text2)}
+.ue-filter.active{border-color:var(--fc,var(--gold));color:var(--fc,var(--gold));background:rgba(232,201,122,.05)}
+.alert-bl{padding:11px 14px;font-size:11.5px;border-radius:0 7px 7px 0;line-height:1.6}
+.alert-bl.w{background:rgba(232,201,122,.07);border-left:3px solid var(--gold);color:var(--text2)}
+.alert-bl.ok{background:rgba(86,207,178,.07);border-left:3px solid var(--green);color:var(--text2)}
+
+/* SRS */
+.srs-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;flex-shrink:0}
+.sstat{padding:13px;background:var(--bg2);border:1px solid var(--border);border-radius:9px;text-align:center}
+.sstat-n{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;line-height:1;margin-bottom:3px}
+.sstat-l{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.card-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:26px;text-align:center;min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.card-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -5%,rgba(232,201,122,.04),transparent)}
+.card-wrap:hover{transform:translateY(-2px);border-color:var(--border2)}
+.card-ue{font-size:8px;padding:2px 9px;border-radius:9px;font-family:'JetBrains Mono',monospace;border:1px solid;display:inline-block;margin-bottom:2px}
+.card-q{font-family:'Playfair Display',serif;font-size:18px;line-height:1.4;color:var(--text);max-width:480px}
+.card-hint{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;letter-spacing:.1em}
+.card-ans{font-size:12px;color:var(--text2);line-height:1.75;text-align:left;width:100%;padding:13px;background:var(--bg3);border-radius:8px;border:1px solid var(--border);display:none}
+.card-ans.show{display:block;animation:fu .3s ease}
+.card-acts{display:flex;gap:8px;justify-content:center;margin-top:4px}
+.ca{padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:11.5px;font-weight:600;transition:all .2s}
+.ca:hover{transform:translateY(-1px)}
+.ca-f{background:rgba(255,107,107,.12);color:var(--red);border:1px solid rgba(255,107,107,.2)}
+.ca-o{background:rgba(232,201,122,.1);color:var(--gold);border:1px solid rgba(232,201,122,.2)}
+.ca-e{background:rgba(86,207,178,.1);color:var(--green);border:1px solid rgba(86,207,178,.2)}
+
+/* COURS */
+.cours-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;flex:1;min-height:0}
+.cours-side{display:flex;flex-direction:column;gap:9px}
+.cours-ta{flex:1;min-height:200px;padding:14px;background:var(--surface);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-family:'Outfit',sans-serif;font-size:12px;line-height:1.7;resize:none;outline:none;transition:border-color .2s}
+.cours-ta:focus{border-color:rgba(232,201,122,.4)}
+.cours-ta::placeholder{color:var(--text3)}
+.cours-actions{display:flex;gap:7px;flex-wrap:wrap;flex-shrink:0}
+.cbtn{padding:8px 14px;border:1px solid var(--border2);background:transparent;cursor:pointer;border-radius:7px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;color:var(--text2);transition:all .2s}
+.cbtn:hover{background:var(--surface);color:var(--text);border-color:var(--border3)}
+.cbtn.prim{background:linear-gradient(135deg,var(--gold),var(--gold2));border-color:transparent;color:#080A10;box-shadow:0 2px 8px rgba(232,201,122,.2)}
+.cbtn.prim:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(232,201,122,.3)}
+.cours-out{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:16px;overflow-y:auto;font-size:12px;line-height:1.78;color:var(--text2);flex:1;min-height:200px;scrollbar-width:thin;scrollbar-color:var(--surface) transparent}
+.cours-out h3{font-family:'Playfair Display',serif;font-size:15px;font-style:italic;color:var(--text);margin-bottom:9px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.cours-out h4{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;margin:12px 0 6px}
+.cours-out strong{color:var(--gold);font-weight:500}
+.cours-out .fitem{padding:9px 11px;background:var(--bg3);border-radius:6px;border-left:2px solid var(--gold);margin-bottom:7px;font-size:11.5px}
+.cours-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:9px;color:var(--text3);text-align:center}
+.cours-empty-icon{font-size:32px;opacity:.4}
+.cours-empty-txt{font-size:11px;line-height:1.6;max-width:220px}
+
+/* MNEMO */
+.mnemo-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.mc{padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;transition:all .2s}
+.mc:hover{border-color:var(--border2);transform:translateY(-1px)}
+.mc-ue{font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px;font-weight:600}
+.mc-concept{font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:8px;line-height:1.3}
+.mc-mnemo{font-size:11.5px;color:var(--blue);font-style:italic;line-height:1.6;padding:8px 11px;background:rgba(96,165,250,.07);border-radius:6px;border-left:3px solid var(--blue);margin-bottom:7px}
+.mc-acr{font-size:10.5px;color:var(--gold);font-family:'JetBrains Mono',monospace;font-weight:500}
+
+/* METHODO */
+.met-tabs{display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0}
+.met-tab{padding:5px 12px;border:1px solid var(--border);background:transparent;cursor:pointer;border-radius:6px;font-size:9.5px;color:var(--text3);font-family:'JetBrains Mono',monospace;transition:all .2s;letter-spacing:.04em}
+.met-tab:hover{border-color:var(--border2);color:var(--text2)}
+.met-tab.active{border-color:var(--gold);color:var(--gold);background:rgba(232,201,122,.07)}
+.met-block{padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:9px}
+.met-block-title{font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:11px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.met-step{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--border)}
+.met-step:last-child{border-bottom:none;padding-bottom:0}
+.met-num{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#080A10;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.met-n{font-size:11.5px;font-weight:600;color:var(--text);margin-bottom:2px}
+.met-d{font-size:10.5px;color:var(--text2);line-height:1.55}
+.vg{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.vc{padding:13px;background:var(--bg2);border:1px solid var(--border);border-radius:9px;transition:all .2s}
+.vc:hover{border-color:var(--border2)}
+.vw{font-family:'Playfair Display',serif;font-size:16px;font-style:italic;color:var(--gold);margin-bottom:6px}
+.vd{font-size:11px;color:var(--text2);line-height:1.55;margin-bottom:7px}
+.ve{font-size:9.5px;font-family:'JetBrains Mono',monospace;color:var(--text3);padding:6px 9px;background:var(--bg3);border-radius:5px;line-height:1.5}
+
+/* URGENCE */
+.urg-hero{background:linear-gradient(135deg,rgba(232,201,122,.07),rgba(255,107,107,.04));border:1px solid rgba(232,201,122,.14);border-radius:11px;padding:20px;text-align:center;flex-shrink:0;position:relative;overflow:hidden}
+.urg-hero::before{content:'J-30';position:absolute;right:18px;top:50%;transform:translateY(-50%);font-family:'Playfair Display',serif;font-size:72px;font-weight:700;color:rgba(255,107,107,.05);line-height:1;pointer-events:none}
+.urg-title{font-family:'Playfair Display',serif;font-size:22px;line-height:1.2;margin-bottom:4px}
+.urg-title em{color:var(--red);font-style:italic}
+.urg-sub{font-size:11px;color:var(--text3)}
+.urg-form{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:9px;flex-shrink:0}
+.urg-lbl{font-size:8px;letter-spacing:.17em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;display:block;margin-bottom:4px}
+.urg-inp{width:100%;padding:8px 11px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'Outfit',sans-serif;font-size:12.5px;outline:none;transition:border-color .2s}
+.urg-inp:focus{border-color:rgba(232,201,122,.4)}
+.urg-gbtn{grid-column:1/-1;padding:12px;background:linear-gradient(135deg,#FF6B6B,#e05050);border:none;cursor:pointer;border-radius:8px;font-family:'Outfit',sans-serif;font-size:12.5px;font-weight:700;color:white;letter-spacing:.06em;transition:all .2s;box-shadow:0 3px 12px rgba(255,107,107,.2)}
+.urg-gbtn:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(255,107,107,.3)}
+.plan-out{background:var(--bg2);border:1px solid var(--border);border-radius:9px;overflow:hidden}
+.plan-item{padding:11px 16px;border-bottom:1px solid var(--border);font-size:11.5px;color:var(--text2);line-height:1.7}
+.plan-item:last-child{border-bottom:none}
+.plan-item strong{color:var(--gold)}
+
+/* POMO */
+#panel-pomo .pi{align-items:center;justify-content:center}
+.pomo-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;max-width:340px;width:100%}
+.pomo-ring-wrap{position:relative;width:170px;height:170px}
+.pomo-svg{width:170px;height:170px;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--border2);stroke-width:9}
+.ring-p{fill:none;stroke:var(--gold);stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .6s cubic-bezier(.4,0,.2,1);stroke-dasharray:481}
+.ring-p.brk{stroke:var(--green)}
+.pomo-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.pomo-t{font-family:'JetBrains Mono',monospace;font-size:34px;font-weight:400;color:var(--text);line-height:1;letter-spacing:-1px}
+.pomo-p{font-size:8.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.pomo-ctrls{display:flex;gap:9px}
+.pomo-btn{padding:10px 20px;border:1px solid var(--border2);background:transparent;cursor:pointer;border-radius:8px;font-family:'Outfit',sans-serif;font-size:11.5px;font-weight:600;color:var(--text2);transition:all .2s}
+.pomo-btn:hover{background:var(--surface);color:var(--text);border-color:var(--border3)}
+.pomo-btn.prim{background:linear-gradient(135deg,var(--gold),var(--gold2));border-color:transparent;color:#080A10;box-shadow:0 3px 10px rgba(232,201,122,.25)}
+.pomo-btn.prim:hover{transform:translateY(-1px)}
+.pomo-dots{display:flex;gap:6px;justify-content:center}
+.pdot{width:9px;height:9px;border-radius:50%;border:1px solid var(--border2);transition:all .3s}
+.pdot.done{background:var(--gold);border-color:var(--gold);box-shadow:0 0 7px rgba(232,201,122,.4)}
+.pdot.cur{border-color:var(--gold);animation:blink 1s infinite}
+.pomo-ue-row{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
+.pue-btn{padding:4px 11px;border:1px solid var(--border);background:transparent;cursor:pointer;border-radius:20px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);transition:all .2s;font-weight:600}
+.pue-btn:hover,.pue-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(232,201,122,.07)}
+.pomo-tip-box{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:13px 16px;width:100%}
+.pomo-tip-lbl{font-size:8px;letter-spacing:.17em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:6px}
+.pomo-tip-txt{font-size:11.5px;color:var(--text2);line-height:1.65;font-style:italic}
+
+/* FEYNMAN */
+#panel-feynman{padding:0}
+#feynman-msgs{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:16px;scrollbar-width:thin;scrollbar-color:var(--surface) transparent}
+#feynman-msgs::-webkit-scrollbar{width:3px}
+#feynman-msgs::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:2px}
+.feyn-welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;padding:28px;text-align:center;animation:fu .5s ease both}
+.feyn-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;max-width:560px;width:100%;margin-top:20px}
+.feyn-step{padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:9px;text-align:left}
+.feyn-step-n{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--gold);line-height:1;margin-bottom:5px}
+.feyn-step-name{font-size:10.5px;font-weight:600;color:var(--text);margin-bottom:3px}
+.feyn-step-desc{font-size:9.5px;color:var(--text3);line-height:1.5}
+.feyn-shortcuts{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-width:420px;width:100%;margin-top:14px}
+.feyn-input-area{padding:10px 20px 16px;border-top:1px solid var(--border);background:rgba(8,10,16,.93);backdrop-filter:blur(14px);flex-shrink:0;z-index:10}
+
+/* LOCI */
+.loci-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.loci-room{padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.loci-room:hover{border-color:var(--border2);transform:translateY(-2px);background:var(--surface)}
+.loci-icon{font-size:24px;margin-bottom:9px;display:block}
+.loci-rname{font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px}
+.loci-rue{font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;font-weight:600}
+.loci-concept{font-size:11.5px;color:var(--text);font-weight:600;margin-bottom:3px;line-height:1.3}
+.loci-detail{font-size:10px;color:var(--text3);line-height:1.5}
+.loci-add-btn{border:2px dashed var(--border2);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:150px;cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif;border-radius:10px;padding:16px}
+.loci-add-btn:hover{border-color:rgba(232,201,122,.3);background:rgba(232,201,122,.03)}
+.loci-add-icon{font-size:22px;opacity:.35}
+.loci-add-txt{font-size:10.5px;color:var(--text3)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);z-index:100;display:flex;align-items:center;justify-content:center;animation:fu .2s ease}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:13px;padding:26px;width:90%;max-width:460px;display:flex;flex-direction:column;gap:13px}
+.modal-title{font-family:'Playfair Display',serif;font-size:19px;font-style:italic;color:var(--text)}
+.modal-field{display:flex;flex-direction:column;gap:5px}
+.modal-lbl{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.modal-inp{padding:9px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:'Outfit',sans-serif;font-size:12.5px;outline:none;transition:border-color .2s;width:100%}
+.modal-inp:focus{border-color:rgba(232,201,122,.4)}
+.modal-btns{display:flex;gap:7px;justify-content:flex-end}
+.modal-cancel{padding:8px 16px;border:1px solid var(--border2);background:transparent;cursor:pointer;border-radius:6px;font-family:'Outfit',sans-serif;font-size:11.5px;color:var(--text2)}
+.modal-save{padding:8px 16px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;cursor:pointer;border-radius:6px;font-family:'Outfit',sans-serif;font-size:11.5px;font-weight:600;color:#080A10}
+</style>
+</head>
+<body>
+<div id="app">
+<aside id="sidebar">
+  <div class="s-logo">
+    <div class="logo-box">N</div>
+    <div>
+      <div class="logo-name">NOVA <em>DCG</em></div>
+      <span class="logo-sub">Révisions intelligentes</span>
+    </div>
+  </div>
+  <div class="sb-scroll">
+    <div class="s-label">Mes UE</div>
+    <div class="ue-pill active" onclick="setUE('UE2',this)"><div class="ue-dot" style="background:#7B8FFF"></div><span class="ue-name">Droit des sociétés</span><span class="ue-code" style="background:rgba(123,143,255,.12);color:#7B8FFF">UE2</span></div>
+    <div class="ue-pill" onclick="setUE('UE4',this)"><div class="ue-dot" style="background:#FF8A50"></div><span class="ue-name">Droit fiscal</span><span class="ue-code" style="background:rgba(255,138,80,.12);color:#FF8A50">UE4</span></div>
+    <div class="ue-pill" onclick="setUE('UE6',this)"><div class="ue-dot" style="background:#4ECDC4"></div><span class="ue-name">Finance d'entreprise</span><span class="ue-code" style="background:rgba(78,205,196,.12);color:#4ECDC4">UE6</span></div>
+    <div class="ue-pill" onclick="setUE('UE9',this)"><div class="ue-dot" style="background:#C084FC"></div><span class="ue-name">Compta approfondie</span><span class="ue-code" style="background:rgba(192,132,252,.12);color:#C084FC">UE9</span></div>
+    <div class="s-label">Modules</div>
+    <button class="mod-btn active" onclick="showPanel('chat',this)"><span class="mod-icon">💬</span><span class="mod-name">Chat Annales</span></button>
+    <button class="mod-btn" onclick="showPanel('cours',this)"><span class="mod-icon">📚</span><span class="mod-name">Analyser mon cours</span></button>
+    <button class="mod-btn" onclick="showPanel('srs',this)"><span class="mod-icon">🔁</span><span class="mod-name">Répétition espacée</span><span class="mod-badge" id="srs-badge" style="background:rgba(255,107,107,.15);color:var(--red)">0</span></button>
+    <button class="mod-btn" onclick="showPanel('mnemo',this)"><span class="mod-icon">💡</span><span class="mod-name">Mnémo-Flash</span></button>
+    <button class="mod-btn" onclick="showPanel('methodo',this)"><span class="mod-icon">📐</span><span class="mod-name">Méthodologie</span></button>
+    <button class="mod-btn" onclick="showPanel('urgence',this)"><span class="mod-icon">🚨</span><span class="mod-name">Urgence J-30</span></button>
+    <button class="mod-btn" onclick="showPanel('pomo',this)"><span class="mod-icon">🍅</span><span class="mod-name">Pomodoro</span></button>
+    <button class="mod-btn" onclick="showPanel('feynman',this)"><span class="mod-icon">🎓</span><span class="mod-name">Technique Feynman</span></button>
+    <button class="mod-btn" onclick="showPanel('loci',this)"><span class="mod-icon">🏠</span><span class="mod-name">Palais de Mémoire</span></button>
+  </div>
+  <div class="sb-bottom">
+    <div class="srs-mini">
+      <div class="srs-mini-row"><span class="srs-mini-lbl">Cartes SRS</span><div class="srs-mini-nums"><span style="color:var(--red)" id="sb-due">0</span><span style="color:var(--text3)">/</span><span style="color:var(--text2)" id="sb-total">0</span></div></div>
+      <div class="prog-bar"><div class="prog-fill" id="sb-prog" style="width:0%"></div></div>
+    </div>
+  </div>
+</aside>
+
+<main id="main">
+  <div id="topbar">
+    <div class="tb-left">
+      <span class="tb-chip" id="ue-chip" style="color:#7B8FFF;border-color:rgba(123,143,255,.3);background:rgba(123,143,255,.08)">UE2</span>
+      <span style="color:var(--text3);font-size:10px">·</span>
+      <span class="tb-mode" id="mode-chip">Chat Annales</span>
+    </div>
+    <div class="tb-right">
+      <div id="pom-widget" onclick="showPanel('pomo',null)">
+        <span style="font-size:11px">🍅</span>
+        <span class="pw-t" id="pw-t">25:00</span>
+        <span class="pw-l" id="pw-l">Focus</span>
+      </div>
+      <button class="tb-btn gold" onclick="newChat()">+ Nouveau</button>
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- CHAT -->
+    <div class="panel active" id="panel-chat" style="padding:0">
+      <div id="messages"><div id="welcome"></div></div>
+      <div id="input-area">
+        <div class="mode-pills">
+          <button class="mpill active" data-mode="exo" onclick="setMode('exo',this)">🎯 Annale</button>
+          <button class="mpill" data-mode="qcm" onclick="setMode('qcm',this)">✅ QCM</button>
+          <button class="mpill" data-mode="corr" onclick="setMode('corr',this)">📝 Corriger</button>
+          <button class="mpill" data-mode="freq" onclick="setMode('freq',this)">📊 Top thèmes</button>
+          <button class="mpill" data-mode="feynman" onclick="setMode('feynman',this)">🎓 Simplement</button>
+        </div>
+        <div class="input-row">
+          <div class="input-box">
+            <textarea id="chat-input" rows="1" placeholder="Demande un exercice, un QCM, ou colle ta réponse à corriger…" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+            <button class="sbtn" id="send-btn" onclick="doSend()"><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/></svg></button>
+          </div>
+        </div>
+        <div class="ifoot"><span class="ihint">↵ Envoyer · ⇧↵ Ligne</span><span class="mem-dot">Mémoire active</span></div>
+      </div>
+    </div>
+
+    <!-- COURS -->
+    <div class="panel" id="panel-cours">
+      <div class="pi">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <h2 class="ptitle">Analyser <em>mon cours</em></h2>
+        </div>
+        <p style="font-size:11.5px;color:var(--text3);line-height:1.65;flex-shrink:0">Colle un chapitre de ton manuel → NOVA génère fiches, QCM et flashcards SRS automatiquement.</p>
+        <div class="cours-wrap">
+          <div class="cours-side">
+            <label style="font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace">Ton cours ou tes notes</label>
+            <textarea class="cours-ta" id="cours-text" placeholder="Colle ici le texte de ton chapitre, tes notes ou un extrait de manuel DCG...&#10;&#10;Ex : Chapitre 3 — La SARL&#10;La SARL est constituée de 2 à 100 associés..."></textarea>
+            <div class="cours-actions">
+              <button class="cbtn prim" onclick="analyserCours('fiche')">📋 Fiche de révision</button>
+              <button class="cbtn" onclick="analyserCours('qcm')">✅ Générer QCM</button>
+              <button class="cbtn" onclick="analyserCours('flash')">🔁 Flashcards SRS</button>
+              <button class="cbtn" onclick="analyserCours('resume')">✨ Résumé express</button>
+            </div>
+          </div>
+          <div class="cours-out" id="cours-out">
+            <div class="cours-empty"><div class="cours-empty-icon">📖</div><div class="cours-empty-txt">Colle ton cours à gauche et choisis une action.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SRS -->
+    <div class="panel" id="panel-srs">
+      <div class="pi">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <h2 class="ptitle">Répétition <em>espacée</em></h2>
+          <button class="gen-btn" onclick="genSRS()">⚡ Générer cartes IA</button>
+        </div>
+        <div class="srs-stats">
+          <div class="sstat"><div class="sstat-n" id="srs-tot" style="color:var(--text)">0</div><div class="sstat-l">Total</div></div>
+          <div class="sstat"><div class="sstat-n" id="srs-due-n" style="color:var(--red)">0</div><div class="sstat-l">À réviser</div></div>
+          <div class="sstat"><div class="sstat-n" id="srs-mast" style="color:var(--green)">0</div><div class="sstat-l">Maîtrisées</div></div>
+          <div class="sstat"><div class="sstat-n" id="srs-str" style="color:var(--gold)">0j</div><div class="sstat-l">Série</div></div>
+        </div>
+        <div id="srs-area"></div>
+      </div>
+    </div>
+
+    <!-- MNEMO -->
+    <div class="panel" id="panel-mnemo">
+      <div class="pi">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <h2 class="ptitle">Mnémo<em>-Flash</em></h2>
+          <button class="gen-btn" onclick="genMnemo()">✨ Générer</button>
+        </div>
+        <div style="display:flex;gap:5px;flex-shrink:0">
+          <button class="ue-filter active" style="--fc:#7B8FFF" onclick="filterMnemo('UE2',this)">UE2 — Droit sociétés</button>
+          <button class="ue-filter" style="--fc:#FF8A50" onclick="filterMnemo('UE4',this)">UE4 — Fiscal</button>
+          <button class="ue-filter" style="--fc:#4ECDC4" onclick="filterMnemo('UE6',this)">UE6 — Finance</button>
+          <button class="ue-filter" style="--fc:#C084FC" onclick="filterMnemo('UE9',this)">UE9 — Compta</button>
+        </div>
+        <div class="mnemo-grid" id="mnemo-grid"></div>
+      </div>
+    </div>
+
+    <!-- METHODO -->
+    <div class="panel" id="panel-methodo">
+      <div class="pi">
+        <h2 class="ptitle" style="flex-shrink:0">Méthodologie <em>épreuve</em></h2>
+        <div class="met-tabs">
+          <button class="met-tab active" onclick="showMet('syllogisme',this)">⚖️ Syllogisme</button>
+          <button class="met-tab" onclick="showMet('financier',this)">📊 Finance</button>
+          <button class="met-tab" onclick="showMet('fiscal',this)">💶 Fiscal</button>
+          <button class="met-tab" onclick="showMet('compta',this)">📒 Compta</button>
+          <button class="met-tab" onclick="showMet('verbes',this)">🔑 Verbes</button>
+        </div>
+        <div id="met-body" style="display:flex;flex-direction:column;gap:9px"></div>
+      </div>
+    </div>
+
+    <!-- URGENCE -->
+    <div class="panel" id="panel-urgence">
+      <div class="pi">
+        <div class="urg-hero"><h2 class="urg-title">Mode <em>Urgence</em></h2><p class="urg-sub">Planning ultra-optimisé basé sur tes points faibles</p></div>
+        <div class="urg-form">
+          <div><label class="urg-lbl">Jours restants</label><input class="urg-inp" id="urg-days" type="number" value="30" min="1" max="120"></div>
+          <div><label class="urg-lbl">Heures / jour</label><input class="urg-inp" id="urg-hours" type="number" value="4" min="1" max="14"></div>
+          <div><label class="urg-lbl">Niveau UE2 (1→5)</label><input class="urg-inp" id="urg-ue2" type="number" value="3" min="1" max="5"></div>
+          <div><label class="urg-lbl">Niveau UE4 (1→5)</label><input class="urg-inp" id="urg-ue4" type="number" value="2" min="1" max="5"></div>
+          <div><label class="urg-lbl">Niveau UE6 (1→5)</label><input class="urg-inp" id="urg-ue6" type="number" value="3" min="1" max="5"></div>
+          <div><label class="urg-lbl">Niveau UE9 (1→5)</label><input class="urg-inp" id="urg-ue9" type="number" value="2" min="1" max="5"></div>
+          <button class="urg-gbtn" onclick="genUrgence()">🚨 Générer mon planning d'urgence</button>
+        </div>
+        <div id="urg-out" style="display:none" class="plan-out"></div>
+      </div>
+    </div>
+
+    <!-- POMO -->
+    <div class="panel" id="panel-pomo">
+      <div class="pi">
+        <div class="pomo-wrap">
+          <div>
+            <div style="font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;text-align:center;margin-bottom:7px">Révision en cours</div>
+            <div class="pomo-ue-row">
+              <button class="pue-btn active" onclick="setPomoUE(this)" data-ue="UE2">UE2</button>
+              <button class="pue-btn" onclick="setPomoUE(this)" data-ue="UE4">UE4</button>
+              <button class="pue-btn" onclick="setPomoUE(this)" data-ue="UE6">UE6</button>
+              <button class="pue-btn" onclick="setPomoUE(this)" data-ue="UE9">UE9</button>
+            </div>
+          </div>
+          <div class="pomo-ring-wrap">
+            <svg class="pomo-svg" viewBox="0 0 170 170">
+              <circle class="ring-bg" cx="85" cy="85" r="76.5"/>
+              <circle class="ring-p" id="pomo-ring" cx="85" cy="85" r="76.5"/>
+            </svg>
+            <div class="pomo-center">
+              <div class="pomo-t" id="pomo-display">25:00</div>
+              <div class="pomo-p" id="pomo-phase">Travail profond</div>
+            </div>
+          </div>
+          <div class="pomo-dots" id="pomo-dots"></div>
+          <div class="pomo-ctrls">
+            <button class="pomo-btn" onclick="resetPomo()">↺</button>
+            <button class="pomo-btn prim" id="pomo-start" onclick="togglePomo()">▶ Démarrer</button>
+            <button class="pomo-btn" onclick="skipPomo()">⏭</button>
+          </div>
+          <div class="pomo-tip-box">
+            <div class="pomo-tip-lbl">💡 Deep Work</div>
+            <div class="pomo-tip-txt" id="pomo-tip">"25 minutes d'attention absolue valent mieux que 2h de distraction."</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEYNMAN -->
+    <div class="panel" id="panel-feynman" style="padding:0">
+      <div id="feynman-msgs">
+        <div class="feyn-welcome" id="feyn-welcome">
+          <div style="font-size:48px;margin-bottom:14px">🎓</div>
+          <h2 style="font-family:'Playfair Display',serif;font-size:26px;margin-bottom:8px">Technique <em style="color:var(--gold);font-style:italic">Feynman</em></h2>
+          <p style="font-size:12px;color:var(--text3);max-width:400px;line-height:1.7;margin-bottom:4px">Si tu peux expliquer simplement, c'est que tu as vraiment compris.</p>
+          <div class="feyn-steps">
+            <div class="feyn-step"><div class="feyn-step-n">1</div><div class="feyn-step-name">Demande</div><div class="feyn-step-desc">Choisis un concept difficile du DCG</div></div>
+            <div class="feyn-step"><div class="feyn-step-n">2</div><div class="feyn-step-name">NOVA explique</div><div class="feyn-step-desc">Avec des analogies du quotidien</div></div>
+            <div class="feyn-step"><div class="feyn-step-n">3</div><div class="feyn-step-name">Tu reformules</div><div class="feyn-step-desc">NOVA vérifie ta compréhension</div></div>
+          </div>
+          <div class="feyn-shortcuts">
+            <button class="wqbtn" onclick="feynAsk('Explique-moi la TVA comme si j\\'avais 10 ans')"><span class="wq-tag" style="color:var(--ue4)">UE4</span><span class="wq-text">La TVA simplement</span></button>
+            <button class="wqbtn" onclick="feynAsk('Explique-moi la consolidation des comptes comme si j\\'avais 10 ans')"><span class="wq-tag" style="color:var(--ue9)">UE9</span><span class="wq-text">La consolidation</span></button>
+            <button class="wqbtn" onclick="feynAsk('Explique-moi le syllogisme juridique comme si j\\'avais 10 ans')"><span class="wq-tag" style="color:var(--ue2)">UE2</span><span class="wq-text">Le syllogisme juridique</span></button>
+            <button class="wqbtn" onclick="feynAsk('Explique-moi la CAF comme si j\\'avais 10 ans')"><span class="wq-tag" style="color:var(--ue6)">UE6</span><span class="wq-text">La CAF</span></button>
+            <button class="wqbtn" onclick="feynAsk('Explique-moi les impôts différés comme si j\\'avais 10 ans')"><span class="wq-tag" style="color:var(--ue9)">UE9</span><span class="wq-text">Les impôts différés</span></button>
+            <button class="wqbtn" onclick="feynAsk('Explique-moi le bilan fonctionnel comme si j\\'avais 10 ans')"><span class="wq-tag" style="color:var(--ue6)">UE6</span><span class="wq-text">Le bilan fonctionnel</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="feyn-input-area">
+        <div class="input-row">
+          <div class="input-box">
+            <textarea id="feyn-inp" rows="1" placeholder="Explique-moi [concept] comme si j'avais 10 ans…" onkeydown="feynKey(event)" oninput="autoResize(this)"></textarea>
+            <button onclick="feynSend()" style="margin:7px;width:34px;height:34px;background:var(--blue);border:none;cursor:pointer;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;transition:all .2s;flex-shrink:0;box-shadow:0 2px 8px rgba(96,165,250,.2)"><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOCI -->
+    <div class="panel" id="panel-loci">
+      <div class="pi">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <h2 class="ptitle">Palais de <em>Mémoire</em></h2>
+          <button class="gen-btn" onclick="openModal()">+ Ajouter une pièce</button>
+        </div>
+        <p style="font-size:11.5px;color:var(--text3);line-height:1.65;flex-shrink:0">Associe chaque concept à une pièce de ta maison. Clique pour créer une image mémorable avec l'IA.</p>
+        <div class="loci-grid" id="loci-grid"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="closeModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-title">✨ Nouvelle pièce</div>
+    <div class="modal-field"><label class="modal-lbl">Émoji</label><input class="modal-inp" id="m-icon" placeholder="🛋️" maxlength="2"></div>
+    <div class="modal-field"><label class="modal-lbl">Nom de la pièce</label><input class="modal-inp" id="m-name" placeholder="Le salon"></div>
+    <div class="modal-field"><label class="modal-lbl">Concept DCG</label><input class="modal-inp" id="m-concept" placeholder="Constitution d'une SARL"></div>
+    <div class="modal-field"><label class="modal-lbl">UE</label>
+      <select class="modal-inp" id="m-ue">
+        <option value="UE2">UE2 — Droit des sociétés</option>
+        <option value="UE4">UE4 — Droit fiscal</option>
+        <option value="UE6">UE6 — Finance</option>
+        <option value="UE9">UE9 — Comptabilité approfondie</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Annuler</button>
+      <button class="modal-save" onclick="saveRoom()">Ajouter ✨</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API='https://api.groq.com/openai/v1/chat/completions';
+const KEY='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';
+const MDL='llama-3.3-70b-versatile';
+const UE_META={UE2:{name:'Droit des sociétés',hex:'#7B8FFF',border:'rgba(123,143,255,.3)',bg:'rgba(123,143,255,.08)'},UE4:{name:'Droit fiscal',hex:'#FF8A50',border:'rgba(255,138,80,.3)',bg:'rgba(255,138,80,.08)'},UE6:{name:"Finance d'entreprise",hex:'#4ECDC4',border:'rgba(78,205,196,.3)',bg:'rgba(78,205,196,.08)'},UE9:{name:'Comptabilité approfondie',hex:'#C084FC',border:'rgba(192,132,252,.3)',bg:'rgba(192,132,252,.08)'}};
+const SYS=`Tu es NOVA, IA de révision DCG d'élite. UE2 Droit sociétés, UE4 Fiscal, UE6 Finance, UE9 Compta approfondie. Réponds TOUJOURS en français. Pédagogue, précise, signale les pièges classiques aux examens.
+MODES:
+[EXERCICE ANNALE] → cas pratique complet style DCG: contexte réaliste, questions numérotées avec barème, correction détaillée. Marque ★★★ les points très fréquents.
+[QCM ANNALE] → 5 QCM style DCG, 4 options A/B/C/D, réponse + explication + fréquence annales.
+[CORRECTION] → fond (contenu, calculs, références légales) ET forme (structure, syllogisme, présentation).
+[TOP THÈMES] → thèmes par fréquence aux annales avec années, conseils prioritaires, pièges.
+[FEYNMAN] → explique comme à un enfant de 10 ans avec analogies du quotidien. Question de vérification à la fin.
+Tu es NOVA uniquement, jamais Claude.`;
+const TIPS=['"25 minutes d\'attention absolue > 2h de distraction. Ferme tout le reste."','"Pendant la pause: lève-toi, marche, hydrate-toi. Pas de téléphone."','"La consolidation mémorielle se produit pendant le repos. Les pauses sont essentielles."','"Après 4 pomodoros: 30 min de vraie pause. Tu en ressortiras plus efficace."','"Commence par la matière la plus difficile. Ton cerveau est au maximum en début de session."','"Qualité de la concentration > quantité de temps. 2h de focus > 6h de semi-présence."'];
+const METHODO_DATA={
+  syllogisme:{title:'Syllogisme Juridique — UE2',steps:[{n:'MAJEURE — La règle de droit',d:'"Selon l\'article XX du Code de commerce..." Toujours citer le texte.'},{n:'MINEURE — Les faits de l\'espèce',d:'"En l\'espèce, la société X... / M. Y a..." Relier la règle aux faits.'},{n:'CONCLUSION — La déduction logique',d:'"Par conséquent..." / "Dès lors..." Jamais de conclusion sans raisonnement.'}],w:'⚠️ Piège n°1 : commencer par la conclusion. Structure M-m-C obligatoire.',ok:'✅ Bonus : citer la jurisprudence. Qualifier juridiquement avant de conclure.'},
+  financier:{title:'Analyse Financière — UE6',steps:[{n:'1. SIG dans l\'ordre strict',d:'VA → EBE → RE → RC → RN. Ne jamais sauter une étape.'},{n:'2. Retraitements bilan fonctionnel',d:'Crédit-bail + effets escomptés obligatoires. FRNG = Ressources stables − Emplois stables.'},{n:'3. BFR et Trésorerie nette',d:'BFR = Actif circ. exploit. − Passif circ. TN = FRNG − BFR.'},{n:'4. Ratios et analyse comparative',d:'Rentabilité, solvabilité, liquidité. Comparer N vs N-1.'},{n:'5. Diagnostic et recommandation',d:"L'entreprise est-elle en bonne santé ? Peut-elle investir ?"}],w:'⚠️ Oublier les retraitements bilan fonctionnel = 0 point sur toute la question.',ok:'✅ Tableaux > phrases. Montrer les calculs intermédiaires.'},
+  fiscal:{title:'Raisonnement Fiscal — UE4',steps:[{n:'1. Identifier l\'impôt',d:'TVA ? IS ? IR ? Ne jamais mélanger les régimes.'},{n:'2. Déterminer l\'assiette',d:'CA HT pour TVA. Résultat comptable pour IS.'},{n:'3. Corrections fiscales',d:'Réintégrations (amendes, charges non déductibles) et déductions conformes.'},{n:'4. Calcul de l\'impôt',d:'Bon taux. Déduire les acomptes versés.'},{n:'5. Contrôle de cohérence',d:'Résultat fiscal négatif sans justification = erreur.'}],w:'⚠️ TVA : toujours vérifier date d\'exigibilité ET déductibilité (véhicule tourisme = NON).',ok:'✅ Présenter le tableau résultat comptable → fiscal clairement numéroté.'},
+  compta:{title:'Comptabilité Approfondie — UE9',steps:[{n:'1. Identifier la nature',d:'Immobilisation ? Stock ? Titre financier ? Leasing ?'},{n:'2. Coût d\'entrée',d:'Prix achat + frais accessoires − remises. Démantèlement à provisionner si applicable.'},{n:'3. Journal — équilibre D/C',d:'Numéros de comptes PCG précis. Équilibre strictement respecté.'},{n:'4. Amortissement',d:'Linéaire ou dégressif. PRORATA TEMPORIS obligatoire 1ère année.'},{n:'5. Clôture',d:'DAP, dépréciations si VRN < VNC, impôts différés.'}],w:'⚠️ Oublier le prorata temporis = erreur systématiquement sanctionnée.',ok:'✅ Tableau d\'amortissement AVANT les écritures journal.'},
+  verbes:[{w:'Citer',d:'Lister sans développer. Réponse courte en liste.',e:'"Citez les conditions..." → 3 items, point.'},{w:'Expliquer',d:'Sens + mécanique. Définir puis illustrer.',e:'"Expliquez la TVA." → définition + schéma.'},{w:'Analyser',d:'Décomposer, causes/effets, regard critique chiffré.',e:'"Analysez..." → calculs + ratios + tendance.'},{w:'Commenter',d:'Jugement motivé, chiffré, contextualisé. Prise de position obligatoire.',e:'"Commentez l\'évolution BFR." → hausse X% due à...'},{w:'Caractériser',d:'Qualifier juridiquement.',e:'"Caractérisez ce contrat." → type + conditions.'},{w:'Apprécier',d:'Juger si régulier/optimal. Prise de position obligatoire.',e:'"Appréciez la décision." → légal ? risques ?'}]
+};
+const LOCI_DEF=[
+  {icon:'🚪',name:'Porte',ue:'UE2',concept:'Conditions de validité du contrat',detail:'Art. 1128 : consentement, capacité, contenu licite.'},
+  {icon:'🛋️',name:'Salon',ue:'UE2',concept:'Formation des sociétés',detail:'SARL, SA, SAS réunies — chacune avec ses règles.'},
+  {icon:'🍳',name:'Cuisine',ue:'UE4',concept:'Calcul de la TVA',detail:'TVA collectée − TVA déductible = TVA due.'},
+  {icon:'📚',name:'Bureau',ue:'UE4',concept:'Résultat fiscal IS',detail:'Résultat comptable + réintégrations − déductions.'},
+  {icon:'🛁',name:'Salle de bain',ue:'UE6',concept:'Bilan fonctionnel & BFR',detail:'BFR = Actif circ. − Passif circ. TN = FRNG − BFR.'},
+  {icon:'🛏️',name:'Chambre',ue:'UE6',concept:'VAN & investissement',detail:'VAN > 0 → on investit. VAN = Σ flux actualisés − I₀.'},
+  {icon:'🌳',name:'Jardin',ue:'UE9',concept:'Immobilisations & amortissements',detail:'Prorata temporis obligatoire en 1ère année.'},
+  {icon:'🔧',name:'Garage',ue:'UE9',concept:'Stocks FIFO / CMUP',detail:'FIFO = 1er entré 1er sorti. CMUP = prix moyen.'},
+  {icon:'🪟',name:'Fenêtre',ue:'UE2',concept:'Dissolution des sociétés',detail:'Causes, procédure liquidation, boni à répartir.'}
+];
+let mnemoData={UE2:[{c:'Conditions contrat (Art.1128)',m:'COCA : Consentement, Objet, Capacité, pAs illicite',a:'C·O·C·A'},{c:'Dissolution — causes légales',m:'JETÉ-O : Jugement, Expiration, Terme, Extinction, Objet illicite',a:'J·E·T·É·O'}],UE4:[{c:'TVA déductible — 4 conditions',m:'NÉUF : Nécessité pro, Exclusions, Utilisation taxée, Facture',a:'N·É·U·F'},{c:'Taux de TVA',m:'2-10-20 : Médicaments (2,1%), Resto/Travaux (10%), Standard (20%)',a:'2·10·20'}],UE6:[{c:'SIG — ordre obligatoire',m:'VA → EBE → RE → RC → RN = "Vente EBE Remonte Au Net"',a:'VERAN'},{c:'Équilibre fonctionnel',m:'FRNG = Ressources stables − Emplois stables. TN = FRNG − BFR',a:'FRNG-BFR-TN'}],UE9:[{c:'Critères activation actif PCG',m:'CRISP : Contrôle, Ressource, Incorporel, Séparable, Probable',a:'C·R·I·S·P'},{c:'IDA vs IDP',m:'IDA = futur Avantage (actif). IDP = futur impôt à Payer (passif)',a:'A=Avantage P=Payer'}]};
+
+let curUE='UE2',curMode='exo',chatHist=[],isLoad=false,feynHist=[];
+let srsCards=[];try{srsCards=JSON.parse(localStorage.getItem('nova_srs')||'[]')}catch(e){}
+let lociRooms=[];try{lociRooms=JSON.parse(localStorage.getItem('nova_loci')||JSON.stringify(LOCI_DEF))}catch(e){lociRooms=[...LOCI_DEF]}
+if(!lociRooms.length)lociRooms=[...LOCI_DEF];
+let cardFlipped=false,pomoSec=25*60,pomoRun=false,pomoBreak=false,pomoSess=1,pomoInt=null;
+let mnemoFilter='UE2';
+
+async function callAPI(messages,system,maxTok=1024){
+  const msgs=system?[{role:'system',content:system},...messages]:messages;
+  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${KEY}`},body:JSON.stringify({model:MDL,max_tokens:maxTok,messages:msgs})});
+  const d=await r.json();
+  if(d.error)throw new Error(d.error.message);
+  return d.choices?.[0]?.message?.content||'';
+}
+
+function showPanel(id,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  document.querySelectorAll('.mod-btn').forEach(b=>b.classList.remove('active'));
+  if(el&&el.classList.contains('mod-btn'))el.classList.add('active');
+  const labels={chat:'Chat Annales',cours:'Analyser mon cours',srs:'Répétition espacée',mnemo:'Mnémo-Flash',methodo:'Méthodologie',urgence:'Urgence J-30',pomo:'Pomodoro',feynman:'Feynman',loci:'Palais de Mémoire'};
+  document.getElementById('mode-chip').textContent=labels[id]||id;
+  if(id==='srs')renderSRS();
+  if(id==='mnemo')renderMnemo(mnemoFilter);
+  if(id==='methodo')showMet('syllogisme',document.querySelector('.met-tab'));
+  if(id==='pomo'){renderPomoDots();updatePomo();}
+  if(id==='loci')renderLoci();
+}
+function setUE(ue,el){curUE=ue;document.querySelectorAll('.ue-pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');const m=UE_META[ue];const c=document.getElementById('ue-chip');c.textContent=ue;c.style.color=m.hex;c.style.borderColor=m.border;c.style.background=m.bg;}
+function setMode(mode,el){curMode=mode;document.querySelectorAll('.mpill').forEach(p=>p.classList.remove('active'));el.classList.add('active');}
+function newChat(){chatHist=[];const m=document.getElementById('messages');m.innerHTML='<div id="welcome"></div>';buildWelcome();}
+
+// ── WELCOME ──
+function buildWelcome(){
+  const w=document.getElementById('welcome');if(!w)return;
+  w.innerHTML=`<div class="w-orb">N</div><div class="w-eye">Annales DCG · Méthode fréquence</div><h1 class="w-title">Révise ce qui<br><em>tombe vraiment</em></h1><p class="w-sub">Exercices style annales, QCM, corrections fond+forme.<br>Thèmes les plus fréquents priorisés.</p>
+  <div class="w-cards">
+    <div class="w-card" onclick="qChat('UE2')"><div class="w-card-n" style="color:#7B8FFF">95%</div><div class="w-card-u" style="color:#7B8FFF">UE2</div><div class="w-card-l">Constitution<br>sociétés</div></div>
+    <div class="w-card" onclick="qChat('UE4')"><div class="w-card-n" style="color:#FF8A50">97%</div><div class="w-card-u" style="color:#FF8A50">UE4</div><div class="w-card-l">Mécanismes<br>TVA</div></div>
+    <div class="w-card" onclick="qChat('UE6')"><div class="w-card-n" style="color:#4ECDC4">94%</div><div class="w-card-u" style="color:#4ECDC4">UE6</div><div class="w-card-l">SIG &<br>diagnostic</div></div>
+    <div class="w-card" onclick="qChat('UE9')"><div class="w-card-n" style="color:#C084FC">93%</div><div class="w-card-u" style="color:#C084FC">UE9</div><div class="w-card-l">Immobilisations<br>& stocks</div></div>
+  </div>
+  <div class="w-quick">
+    <button class="wqbtn" onclick="doQuick('UE2','exo','Génère un exercice annale DCG UE2 sur la constitution d\\'une SARL')"><span class="wq-tag" style="color:#7B8FFF">UE2 ★★★</span><span class="wq-text">SARL — constitution & gestion</span></button>
+    <button class="wqbtn" onclick="doQuick('UE4','exo','Génère un exercice annale DCG UE4 sur les mécanismes TVA')"><span class="wq-tag" style="color:#FF8A50">UE4 ★★★</span><span class="wq-text">TVA — exercice annale complet</span></button>
+    <button class="wqbtn" onclick="doQuick('UE6','exo','Génère un exercice annale DCG UE6 sur les SIG et le bilan fonctionnel')"><span class="wq-tag" style="color:#4ECDC4">UE6 ★★★</span><span class="wq-text">SIG & diagnostic financier</span></button>
+    <button class="wqbtn" onclick="doQuick('UE9','exo','Génère un exercice annale DCG UE9 sur les immobilisations et amortissements')"><span class="wq-tag" style="color:#C084FC">UE9 ★★★</span><span class="wq-text">Immobilisations & amortissements</span></button>
+  </div>`;
+}
+function qChat(ue){const pils=document.querySelectorAll('.ue-pill');pils.forEach(p=>{if(p.getAttribute('onclick')&&p.getAttribute('onclick').includes(ue))p.click();});const prompts={UE2:"Génère un exercice annale DCG UE2 sur la constitution d'une SARL",UE4:"Génère un exercice annale DCG UE4 sur la TVA",UE6:"Génère un exercice annale DCG UE6 sur les SIG",UE9:"Génère un exercice annale DCG UE9 sur les immobilisations"};sendChat(prompts[ue]);}
+function doQuick(ue,mode,text){setUE(ue,document.querySelector(`.ue-pill[onclick*="${ue}"]`));setMode(mode,document.querySelector(`.mpill[data-mode="${mode}"]`));sendChat(text);}
+
+// ── CHAT SEND ──
+async function doSend(){const i=document.getElementById('chat-input');const t=i.value.trim();if(!t||isLoad)return;i.value='';autoResize(i);sendChat(t);}
+async function sendChat(text){
+  if(isLoad)return;
+  document.getElementById('welcome')?.remove();
+  const fl=document.createElement('div');fl.className='flash';document.body.appendChild(fl);setTimeout(()=>fl.remove(),700);
+  chatHist.push({role:'user',content:text});
+  appendMsg('messages','user',text,curUE);
+  const tid=showTyping('messages');
+  isLoad=true;document.getElementById('send-btn').disabled=true;
+  const mm={exo:'EXERCICE ANNALE',qcm:'QCM ANNALE',corr:'CORRECTION',freq:'TOP THÈMES',feynman:'FEYNMAN'};
+  const aug=`[MODE: ${mm[curMode]||'EXERCICE ANNALE'}] [UE: ${curUE} — ${UE_META[curUE].name}]\n\n${text}`;
+  try{
+    const reply=await callAPI([...chatHist.slice(0,-1),{role:'user',content:aug}],SYS,1200);
+    removeTyping(tid);
+    chatHist.push({role:'assistant',content:reply});
+    appendMsg('messages','assistant',reply,curUE);
+    if(curMode==='qcm')tryExtractCard(reply,curUE);
+  }catch(e){removeTyping(tid);appendMsg('messages','assistant','⚠️ Erreur de connexion. Vérifie ta connexion internet.',curUE);}
+  isLoad=false;document.getElementById('send-btn').disabled=false;
+}
+function appendMsg(cid,role,content,ue){
+  const m=document.getElementById(cid);const div=document.createElement('div');div.className=`message ${role}`;
+  const meta=UE_META[ue]||UE_META.UE2;const isN=role==='assistant';
+  let html=content
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/(?<!\*)\*(?!\*)([^*]+)(?<!\*)\*(?!\*)/g,'<em>$1</em>')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^#### (.+)$/gm,'<h4>$1</h4>')
+    .replace(/^> ⚠️(.+)$/gm,'<div class="al w">⚠️$1</div>')
+    .replace(/^> ✅(.+)$/gm,'<div class="al ok">✅$1</div>')
+    .replace(/^> ℹ️(.+)$/gm,'<div class="al i">ℹ️$1</div>')
+    .replace(/★★★/g,'<span class="stars">★★★</span>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/^---$/gm,'<hr>');
+  html=html.split('\n\n').map(p=>p.startsWith('<')?p:`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+  div.innerHTML=`<div class="m-av ${isN?'nova':'user'}">${isN?'N':'V'}</div><div class="m-body"><div class="m-meta"><span class="m-name">${isN?'NOVA':'Vous'}</span>${isN?`<span class="m-ue" style="color:${meta.hex};border-color:${meta.border};background:${meta.bg}">${ue}</span>`:''}</div><div class="mbub">${html}</div></div>`;
+  m.appendChild(div);m.scrollTo({top:m.scrollHeight,behavior:'smooth'});
+}
+function showTyping(cid){const m=document.getElementById(cid);const id='ty'+Date.now();const d=document.createElement('div');d.id=id;d.className='message assistant';d.innerHTML=`<div class="m-av nova">N</div><div class="m-body"><div class="m-meta"><span class="m-name">NOVA</span></div><div class="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>`;m.appendChild(d);m.scrollTo({top:m.scrollHeight,behavior:'smooth'});return id;}
+function removeTyping(id){document.getElementById(id)?.remove();}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();doSend();}}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,110)+'px';}
+
+// ── COURS ──
+async function analyserCours(type){
+  const text=document.getElementById('cours-text').value.trim();
+  if(!text){alert('Colle ton cours dans la zone à gauche !');return;}
+  const out=document.getElementById('cours-out');
+  out.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:20px;color:var(--text3)"><div class="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div><span>Analyse en cours…</span></div>`;
+  const prompts={
+    fiche:`Crée une fiche de révision DCG synthétique et complète de ce cours. Structure: titre, points clés numérotés, définitions importantes, règles à retenir, pièges classiques, exemples. Formatage clair avec titres.`,
+    qcm:`Génère 6 QCM style DCG basés sur ce cours. 4 options A/B/C/D chacun. Inclure réponse correcte + explication courte.`,
+    flash:`Génère 8 flashcards SRS basées sur ce cours. Format JSON strict: [{"question":"...","answer":"..."}]. Rien d'autre.`,
+    resume:`Résumé express en 10 bullet points maximum. L'essentiel à retenir pour l'examen. Sois ultra-concis.`
+  };
+  try{
+    const reply=await callAPI([{role:'user',content:`COURS:\n${text}\n\nTÂCHE: ${prompts[type]}`}],SYS,1400);
+    if(type==='flash'){
+      try{
+        const raw=reply.replace(/```json?/g,'').replace(/```/g,'').trim();
+        const cards=JSON.parse(raw);
+        cards.forEach(c=>{srsCards.push({id:Date.now()+Math.random(),ue:curUE,question:c.question,answer:c.answer,ef:1,reviews:0,mastered:false});});
+        saveSRS();updateSRSBadge();
+        out.innerHTML=`<h3>✅ ${cards.length} flashcards créées !</h3><p style="color:var(--text3);font-size:12px;margin-top:8px">Elles ont été ajoutées à ton module Répétition Espacée.</p>${cards.map(c=>`<div class="fitem"><strong>Q:</strong> ${c.question}<br><strong>R:</strong> ${c.answer}</div>`).join('')}`;
+      }catch(e){out.innerHTML=`<p>${reply}</p>`;}
+    }else{
+      let html=reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^#### (.+)$/gm,'<h4>$1</h4>').replace(/^- (.+)$/gm,'<div class="fitem">$1</div>');
+      html=html.split('\n\n').map(p=>p.startsWith('<')?p:`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+      out.innerHTML=html;
+    }
+  }catch(e){out.innerHTML=`<p style="color:var(--red)">Erreur de connexion.</p>`;}
+}
+function clearCours(){document.getElementById('cours-text').value='';document.getElementById('cours-out').innerHTML='<div class="cours-empty"><div class="cours-empty-icon">📖</div><div class="cours-empty-txt">Colle ton cours à gauche et choisis une action.</div></div>';}
+
+// ── SRS ──
+function saveSRS(){try{localStorage.setItem('nova_srs',JSON.stringify(srsCards));}catch(e){}}
+function isDue(c){return !c.nextReview||new Date(c.nextReview)<=new Date();}
+function getDue(){return srsCards.filter(isDue);}
+function scheduleCard(card,diff){const days=[1,7,30][diff];const nxt=new Date();nxt.setDate(nxt.getDate()+Math.round(days*(card.ef||1)));card.nextReview=nxt.toISOString();card.ef=diff===0?Math.max(1.3,(card.ef||1)-.2):(card.ef||1)+.1*diff;card.reviews=(card.reviews||0)+1;card.mastered=(card.ef||1)>=2.5&&card.reviews>=3;saveSRS();}
+function updateSRSBadge(){const due=getDue().length;document.getElementById('srs-badge').textContent=due;document.getElementById('sb-due').textContent=due;document.getElementById('sb-total').textContent=srsCards.length;const prog=srsCards.length?Math.round((srsCards.length-due)/srsCards.length*100):0;document.getElementById('sb-prog').style.width=prog+'%';}
+function renderSRS(){
+  const due=getDue();
+  document.getElementById('srs-tot').textContent=srsCards.length;
+  document.getElementById('srs-due-n').textContent=due.length;
+  document.getElementById('srs-mast').textContent=srsCards.filter(c=>c.mastered).length;
+  document.getElementById('srs-str').textContent=(localStorage.getItem('nova_streak')||0)+'j';
+  updateSRSBadge();
+  const area=document.getElementById('srs-area');
+  if(!srsCards.length){area.innerHTML=`<div style="text-align:center;padding:36px;color:var(--text3)"><div style="font-size:32px;margin-bottom:10px">🃏</div><p style="font-size:12px">Pas encore de cartes. Fais un QCM dans Chat, analyse un cours, ou clique "Générer cartes IA".</p></div>`;return;}
+  if(!due.length){area.innerHTML=`<div style="text-align:center;padding:36px;color:var(--text3)"><div style="font-size:32px;margin-bottom:10px">✅</div><p style="font-size:12px">Toutes les cartes sont à jour ! Reviens demain.</p></div>`;return;}
+  const card=due[0];const meta=UE_META[card.ue]||UE_META.UE2;
+  const prog=srsCards.length-due.length;const pct=Math.round(prog/srsCards.length*100);
+  cardFlipped=false;
+  area.innerHTML=`
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:5px"><span>${prog}/${srsCards.length} revues</span><span>${due.length} restante${due.length>1?'s':''}</span></div>
+    <div class="prog-bar" style="margin-bottom:13px"><div class="prog-fill" style="width:${pct}%"></div></div>
+    <div class="card-wrap" id="srs-card" onclick="flipCard()">
+      <span class="card-ue" style="color:${meta.hex};border-color:${meta.border};background:${meta.bg}">${card.ue}</span>
+      <div class="card-q">${card.question}</div>
+      <div class="card-hint">Appuie pour révéler la réponse</div>
+      <div class="card-ans" id="card-ans">${card.answer}</div>
+      <div class="card-acts" id="card-acts" style="display:none">
+        <button class="ca ca-f" onclick="event.stopPropagation();rateCard(0)">😓 J+1</button>
+        <button class="ca ca-o" onclick="event.stopPropagation();rateCard(1)">😊 J+7</button>
+        <button class="ca ca-e" onclick="event.stopPropagation();rateCard(2)">🎯 J+30</button>
+      </div>
+    </div>`;
+}
+function flipCard(){if(cardFlipped)return;cardFlipped=true;document.getElementById('card-ans').classList.add('show');document.getElementById('card-acts').style.display='flex';document.getElementById('srs-card').style.cursor='default';document.querySelector('.card-hint').style.display='none';}
+function rateCard(diff){const due=getDue();if(!due.length)return;scheduleCard(due[0],diff);renderSRS();}
+function tryExtractCard(text,ue){const qm=text.match(/1[\.\)]\s+(.+?)(?:\n|$)/);if(qm){const am=text.match(/[Rr]éponse\s*:?\s*([A-D])\s*[–—\-]?\s*(.+?)(?:\n|$)/);if(am){srsCards.unshift({id:Date.now(),ue,question:qm[1].trim(),answer:`${am[1]}. ${am[2].trim()}`,ef:1,reviews:0,mastered:false});saveSRS();updateSRSBadge();}}}
+async function genSRS(){const btn=document.querySelector('#panel-srs .gen-btn');btn.textContent='⟳ Génération…';btn.disabled=true;
+  try{
+    const reply=await callAPI([{role:'user',content:`Génère 6 flashcards pour ${curUE} (${UE_META[curUE].name}). Réponds UNIQUEMENT avec un tableau JSON valide: [{"question":"...","answer":"..."}]`}],'Génère des flashcards DCG en JSON uniquement. Tableau JSON valide uniquement, sans markdown, sans texte autour.',600);
+    const raw=reply.replace(/```json?/g,'').replace(/```/g,'').trim();
+    const cards=JSON.parse(raw);
+    cards.forEach(c=>{srsCards.push({id:Date.now()+Math.random(),ue:curUE,question:c.question,answer:c.answer,ef:1,reviews:0,mastered:false});});
+    saveSRS();renderSRS();
+  }catch(e){alert('Erreur lors de la génération. Réessaie !');}
+  btn.textContent='⚡ Générer cartes IA';btn.disabled=false;
+}
+
+// ── MNEMO ──
+function renderMnemo(ue){
+  mnemoFilter=ue;const grid=document.getElementById('mnemo-grid');const data=mnemoData[ue]||[];const meta=UE_META[ue];
+  if(!data.length){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--text3)"><div style="font-size:28px;margin-bottom:8px">💡</div><p>Clique "Générer" pour créer des mnémotechniques.</p></div>`;return;}
+  grid.innerHTML=data.map(d=>`<div class="mc"><div class="mc-ue" style="color:${meta.hex}">${ue}</div><div class="mc-concept">${d.c}</div><div class="mc-mnemo">${d.m}</div><div class="mc-acr">✦ ${d.a}</div></div>`).join('');
+}
+function filterMnemo(ue,el){document.querySelectorAll('.ue-filter').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderMnemo(ue);}
+async function genMnemo(){const btn=document.querySelector('#panel-mnemo .gen-btn');btn.textContent='⟳…';btn.disabled=true;
+  try{
+    const reply=await callAPI([{role:'user',content:`4 mnémotechniques DCG pour ${mnemoFilter}. JSON uniquement: [{"c":"concept","m":"moyen mnémotechnique","a":"acronyme"}]`}],'Génère des mnémotechniques en JSON uniquement. Pas de texte autour.',600);
+    const raw=reply.replace(/```json?/g,'').replace(/```/g,'').trim();
+    const items=JSON.parse(raw);
+    mnemoData[mnemoFilter]=[...mnemoData[mnemoFilter],...items];
+    renderMnemo(mnemoFilter);
+  }catch(e){alert('Erreur lors de la génération.');}
+  btn.textContent='✨ Générer';btn.disabled=false;
+}
+
+// ── METHODO ──
+function showMet(tab,el){
+  document.querySelectorAll('.met-tab').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');
+  const body=document.getElementById('met-body');const data=METHODO_DATA[tab];
+  if(tab==='verbes'){body.innerHTML=`<div class="vg">${data.map(v=>`<div class="vc"><div class="vw">${v.w}</div><div class="vd">${v.d}</div><div class="ve">${v.e}</div></div>`).join('')}</div>`;return;}
+  if(!data)return;
+  body.innerHTML=`<div class="met-block"><div class="met-block-title">${data.title}</div>${data.steps.map((s,i)=>`<div class="met-step"><div class="met-num">${i+1}</div><div><div class="met-n">${s.n}</div><div class="met-d">${s.d}</div></div></div>`).join('')}</div><div class="alert-bl w">${data.w}</div><div class="alert-bl ok">${data.ok}</div>`;
+}
+
+// ── URGENCE ──
+async function genUrgence(){
+  const days=document.getElementById('urg-days').value;const hours=document.getElementById('urg-hours').value;
+  const l={UE2:document.getElementById('urg-ue2').value,UE4:document.getElementById('urg-ue4').value,UE6:document.getElementById('urg-ue6').value,UE9:document.getElementById('urg-ue9').value};
+  const btn=document.querySelector('.urg-gbtn');btn.textContent='⟳ Génération…';btn.disabled=true;
+  try{
+    const reply=await callAPI([{role:'user',content:`Planning DCG URGENT: ${days} jours, ${hours}h/jour. Niveaux (1=nul, 5=excellent): UE2=${l.UE2} UE4=${l.UE4} UE6=${l.UE6} UE9=${l.UE9}. Plus le niveau est faible, plus de temps alloué. Génère: 1) Bilan rapide par UE, 2) Les 7 premiers jours détaillés jour par jour, 3) Vue globale semaine par semaine, 4) Top 5 sujets ultra-prioritaires.`}],SYS,1400);
+    const out=document.getElementById('urg-out');out.style.display='block';
+    let html=reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+    html=html.split('\n\n').map(p=>`<div class="plan-item">${p.replace(/\n/g,'<br>')}</div>`).join('');
+    out.innerHTML=html;
+  }catch(e){alert('Erreur lors de la génération.');}
+  btn.textContent='🚨 Générer mon planning d\'urgence';btn.disabled=false;
+}
+
+// ── POMO ──
+function renderPomoDots(){const d=document.getElementById('pomo-dots');d.innerHTML=Array.from({length:4},(_,i)=>`<div class="pdot ${i<pomoSess-1?'done':i===pomoSess-1?'cur':''}"></div>`).join('');}
+function updatePomo(){
+  const m=Math.floor(pomoSec/60).toString().padStart(2,'0');const s=(pomoSec%60).toString().padStart(2,'0');
+  const disp=`${m}:${s}`;
+  document.getElementById('pomo-display').textContent=disp;
+  document.getElementById('pw-t').textContent=disp;
+  document.getElementById('pomo-phase').textContent=pomoBreak?'Pause 🌿':'Travail profond';
+  document.getElementById('pw-l').textContent=pomoBreak?'Pause':'Focus';
+  const total=pomoBreak?5*60:25*60;
+  document.getElementById('pomo-ring').style.strokeDashoffset=481*(1-pomoSec/total);
+  document.getElementById('pomo-ring').classList.toggle('brk',pomoBreak);
+  const w=document.getElementById('pom-widget');w.classList.toggle('run',pomoRun&&!pomoBreak);w.classList.toggle('brk',pomoRun&&pomoBreak);
+}
+function togglePomo(){
+  if(pomoRun){clearInterval(pomoInt);pomoRun=false;document.getElementById('pomo-start').textContent='▶ Reprendre';}
+  else{pomoRun=true;document.getElementById('pomo-start').textContent='⏸ Pause';
+    pomoInt=setInterval(()=>{pomoSec--;
+      if(pomoSec<=0){clearInterval(pomoInt);pomoRun=false;
+        if(!pomoBreak){pomoBreak=true;pomoSec=5*60;document.getElementById('pomo-tip').textContent=TIPS[Math.floor(Math.random()*TIPS.length)];document.getElementById('pomo-start').textContent='▶ Démarrer pause';}
+        else{pomoBreak=false;pomoSec=25*60;pomoSess=Math.min(pomoSess+1,4);document.getElementById('pomo-start').textContent='▶ Nouvelle session';renderPomoDots();}
+      }updatePomo();},1000);
+  }updatePomo();
+}
+function resetPomo(){clearInterval(pomoInt);pomoRun=false;pomoBreak=false;pomoSec=25*60;pomoSess=1;document.getElementById('pomo-start').textContent='▶ Démarrer';renderPomoDots();updatePomo();}
+function skipPomo(){clearInterval(pomoInt);pomoRun=false;if(!pomoBreak){pomoBreak=true;pomoSec=5*60;}else{pomoBreak=false;pomoSec=25*60;pomoSess=Math.min(pomoSess+1,4);renderPomoDots();}document.getElementById('pomo-start').textContent='▶ Démarrer';updatePomo();}
+function setPomoUE(el){document.querySelectorAll('.pue-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+
+// ── FEYNMAN ──
+async function feynSend(){const i=document.getElementById('feyn-inp');const t=i.value.trim();if(!t)return;i.value='';autoResize(i);feynAsk(t);}
+async function feynAsk(text){
+  document.getElementById('feyn-welcome')?.remove();
+  feynHist.push({role:'user',content:text});
+  appendMsg('feynman-msgs','user',text,'UE2');
+  const tid=showTyping('feynman-msgs');
+  try{
+    const reply=await callAPI([...feynHist],'Tu es NOVA en mode Feynman. Explique les concepts DCG comme à un enfant de 10 ans avec des analogies du quotidien simples et mémorables. Pose toujours une question de vérification à la fin. Sois chaleureux et encourageant. Réponds en français.',900);
+    removeTyping(tid);feynHist.push({role:'assistant',content:reply});appendMsg('feynman-msgs','assistant',reply,'UE2');
+  }catch(e){removeTyping(tid);appendMsg('feynman-msgs','assistant','⚠️ Erreur de connexion.','UE2');}
+}
+function feynKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();feynSend();}}
+
+// ── LOCI ──
+function saveLoci(){try{localStorage.setItem('nova_loci',JSON.stringify(lociRooms));}catch(e){}}
+function renderLoci(){
+  const g=document.getElementById('loci-grid');
+  const rooms=lociRooms.map(r=>{const m=UE_META[r.ue]||UE_META.UE2;
+    return`<div class="loci-room" onclick="lociClick('${r.name.replace(/'/g,"\\'")}','${r.concept.replace(/'/g,"\\'")}','${r.ue}')">
+      <span class="loci-icon">${r.icon}</span>
+      <div class="loci-rname">${r.name}</div>
+      <div class="loci-rue" style="color:${m.hex}">${r.ue}</div>
+      <div class="loci-concept">${r.concept}</div>
+      <div class="loci-detail">${r.detail}</div>
+    </div>`;
+  }).join('');
+  g.innerHTML=rooms+`<button class="loci-add-btn" onclick="openModal()"><div class="loci-add-icon">+</div><div class="loci-add-txt">Ajouter une pièce</div></button>`;
+}
+function lociClick(name,concept,ue){
+  showPanel('feynman',document.querySelector('.mod-btn[onclick*="feynman"]'));
+  feynAsk(`Crée une image mentale mémorable pour retenir "${concept}" en associant ça à la pièce "${name}" de ma maison. Utilise des détails visuels, colorés et absurdes pour que ça reste en mémoire.`);
+}
+function openModal(){document.getElementById('modal').style.display='flex';}
+function closeModal(e){if(!e||e.target===document.getElementById('modal'))document.getElementById('modal').style.display='none';}
+function saveRoom(){
+  const icon=document.getElementById('m-icon').value.trim()||'🏠';
+  const name=document.getElementById('m-name').value.trim();
+  const concept=document.getElementById('m-concept').value.trim();
+  const ue=document.getElementById('m-ue').value;
+  if(!name||!concept){alert('Remplis le nom et le concept !');return;}
+  lociRooms.push({icon,name,concept,ue,detail:'Clique pour créer une image mémorable.'});
+  saveLoci();renderLoci();closeModal();
+  document.getElementById('m-icon').value='';document.getElementById('m-name').value='';document.getElementById('m-concept').value='';
+}
+
+// ── INIT ──
+buildWelcome();
+renderPomoDots();updatePomo();
+updateSRSBadge();
+showMet('syllogisme',null);
+</script>
+</body>
+</html>
